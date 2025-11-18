@@ -20,96 +20,59 @@ const int POWER_STRONG = 255;  // 強い
 // テスト設定
 const int TEST_DURATION = 2000; // 各モーター2秒間テスト
 
-bool isRunning = false;
-
-void testMotor(int pin, int channel, int motorNum, int power) {
-  M5.Display.clear();
-  M5.Display.setCursor(0, 0);
-  M5.Display.setTextSize(2);
-  M5.Display.printf("Motor %d\n", motorNum);
-  M5.Display.println("");
-  M5.Display.setTextSize(1);
-  M5.Display.printf("Pin: G%d\n", pin);
-  M5.Display.printf("Power: %d\n", power);
-  M5.Display.println("");
+void testMotor(int pin, int channel, int motorNum, int power, const char* powerName) {
+  Serial.printf("=== Motor%d G%d: %s (PWM=%d) ===\n", motorNum, pin, powerName, power);
   
+  // LED色で状態表示
   if (power == POWER_WEAK) {
-    M5.Display.println("Testing: WEAK");
-  } else {
-    M5.Display.println("Testing: STRONG");
+    M5.Power.setLed(50);  // LED 50%（弱い）
+  } else if (power == POWER_STRONG) {
+    M5.Power.setLed(255);  // LED 100%（強い）
   }
-  
-  Serial.printf("Motor%d G%d: PWM=%d\n", motorNum, pin, power);
   
   ledcWrite(channel, power);
   delay(TEST_DURATION);
   ledcWrite(channel, 0);
+  
+  M5.Power.setLed(0);  // LED OFF
+  delay(500);
 }
 
 void runAllTests() {
-  M5.Display.clear();
-  M5.Display.setCursor(0, 0);
-  M5.Display.setTextSize(2);
-  M5.Display.println("Starting");
-  M5.Display.println("Test...");
-  delay(1000);
+  Serial.println("\n=== Starting Motor Test ===");
   
-  Serial.println("=== Starting Motor Test ===");
+  // テスト開始をLED点滅で通知
+  for (int i = 0; i < 3; i++) {
+    M5.Power.setLed(255);
+    delay(200);
+    M5.Power.setLed(0);
+    delay(200);
+  }
   
   // Motor 1 - Weak
-  testMotor(MOTOR1_PIN, MOTOR1_CH, 1, POWER_WEAK);
-  delay(500);
+  testMotor(MOTOR1_PIN, MOTOR1_CH, 1, POWER_WEAK, "WEAK");
   
   // Motor 1 - Strong
-  testMotor(MOTOR1_PIN, MOTOR1_CH, 1, POWER_STRONG);
-  delay(500);
+  testMotor(MOTOR1_PIN, MOTOR1_CH, 1, POWER_STRONG, "STRONG");
   
   // Motor 2 - Weak
-  testMotor(MOTOR2_PIN, MOTOR2_CH, 2, POWER_WEAK);
-  delay(500);
+  testMotor(MOTOR2_PIN, MOTOR2_CH, 2, POWER_WEAK, "WEAK");
   
   // Motor 2 - Strong
-  testMotor(MOTOR2_PIN, MOTOR2_CH, 2, POWER_STRONG);
-  delay(500);
+  testMotor(MOTOR2_PIN, MOTOR2_CH, 2, POWER_STRONG, "STRONG");
   
   // Motor 3 - Weak
-  testMotor(MOTOR3_PIN, MOTOR3_CH, 3, POWER_WEAK);
-  delay(500);
+  testMotor(MOTOR3_PIN, MOTOR3_CH, 3, POWER_WEAK, "WEAK");
   
   // Motor 3 - Strong
-  testMotor(MOTOR3_PIN, MOTOR3_CH, 3, POWER_STRONG);
-  delay(500);
+  testMotor(MOTOR3_PIN, MOTOR3_CH, 3, POWER_STRONG, "STRONG");
   
-  Serial.println("=== Test Complete ===");
+  Serial.println("=== Test Complete ===\n");
   
-  M5.Display.clear();
-  M5.Display.setCursor(0, 0);
-  M5.Display.setTextSize(2);
-  M5.Display.println("Test");
-  M5.Display.println("Complete!");
-  M5.Display.println("");
-  M5.Display.setTextSize(1);
-  M5.Display.println("");
-  M5.Display.println("Press button");
-  M5.Display.println("to test again");
-  
+  // 完了をLED点灯で表示
+  M5.Power.setLed(255);
   delay(2000);
-  
-  M5.Display.clear();
-  M5.Display.setCursor(0, 0);
-  M5.Display.setTextSize(1);
-  M5.Display.println("3 DC Motor Test");
-  M5.Display.println("===============");
-  M5.Display.println("");
-  M5.Display.println("Motors: G5,G6,G7");
-  M5.Display.printf("Freq: %dHz\n", PWM_FREQ);
-  M5.Display.println("");
-  M5.Display.println("Test sequence:");
-  M5.Display.println("M1 Weak->Strong");
-  M5.Display.println("M2 Weak->Strong");
-  M5.Display.println("M3 Weak->Strong");
-  M5.Display.println("");
-  M5.Display.println("Press to start");
+  M5.Power.setLed(0);
 }
 
 void setup() {
@@ -117,7 +80,9 @@ void setup() {
   M5.begin(cfg);
   
   Serial.begin(115200);
-  Serial.println("3 DC Motor Auto Test");
+  delay(1000);
+  Serial.println("\n3 DC Motor Auto Test (AtomS3 Lite)");
+  Serial.println("====================================");
   
   // 3つのモーターのPWM初期化
   Serial.printf("Init Motor1: Pin=%d, Ch=%d\n", MOTOR1_PIN, MOTOR1_CH);
@@ -136,22 +101,17 @@ void setup() {
   ledcWrite(MOTOR3_CH, 0);
   
   Serial.println("PWM Init Complete");
+  Serial.println("\nPress button to start test");
+  Serial.println("LED brightness indicates:");
+  Serial.println("  Blinking = Test starting");
+  Serial.println("  Dim      = Weak power");
+  Serial.println("  Bright   = Strong power");
+  Serial.println("  2sec ON  = Test complete\n");
   
-  M5.Display.clear();
-  M5.Display.setTextSize(1);
-  M5.Display.setCursor(0, 0);
-  M5.Display.println("3 DC Motor Test");
-  M5.Display.println("===============");
-  M5.Display.println("");
-  M5.Display.println("Motors: G5,G6,G7");
-  M5.Display.printf("Freq: %dHz\n", PWM_FREQ);
-  M5.Display.println("");
-  M5.Display.println("Test sequence:");
-  M5.Display.println("M1 Weak->Strong");
-  M5.Display.println("M2 Weak->Strong");
-  M5.Display.println("M3 Weak->Strong");
-  M5.Display.println("");
-  M5.Display.println("Press to start");
+  // 起動完了をLEDで通知
+  M5.Power.setLed(100);
+  delay(500);
+  M5.Power.setLed(0);
 }
 
 void loop() {
