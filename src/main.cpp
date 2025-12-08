@@ -19,10 +19,13 @@ const int POWER_STRONG = 200;  // 強い
 
 // テスト設定
 const int TEST_DURATION = 2000; // 各モーター2秒間テスト
-const int PATTERN_INTERVAL = 3000;  // 10パターンのインターバル3秒
 
 // 長押し判定時間（ミリ秒）
 const int LONG_PRESS_TIME = 1000;  // 1秒以上で長押し
+
+// 10パターンの動作時間（1000-3000ms）とインターバル（0-500ms）
+const int patternRunTimes[10] = {1800, 2400, 1200, 2700, 1500, 2100, 1000, 2900, 1600, 2300};  // ms
+const int patternIntervals[10] = {350, 100, 450, 200, 0, 300, 500, 150, 250, 50};  // ms (0-500ms)
 
 void testMotor(int pin, int channel, int motorNum, int power, const char* powerName) {
   M5.Display.clear();
@@ -97,7 +100,7 @@ void runAllTests() {
   delay(2000);
 }
 
-void executePattern(int motorNum, int power, int moveNum) {
+void executePattern(int motorNum, int power, int moveNum, int runTime, int intervalTime) {
   // 全モーター停止
   ledcWrite(MOTOR1_CH, 0);
   ledcWrite(MOTOR2_CH, 0);
@@ -134,16 +137,19 @@ void executePattern(int motorNum, int power, int moveNum) {
   M5.Display.printf("Motor %d\n", motorNum);
   M5.Display.println(powerName);
   M5.Display.setTextSize(1);
-  M5.Display.printf("G%d: PWM=%d", pin, power);
+  M5.Display.printf("G%d: PWM=%d\n", pin, power);
+  M5.Display.printf("Time:%dms\n", runTime);
+  M5.Display.printf("Wait:%dms", intervalTime);
   
-  Serial.printf("Move %d/10: Motor%d G%d %s (PWM=%d)\n", moveNum, motorNum, pin, powerName, power);
+  Serial.printf("Move %d/10: Motor%d G%d %s (PWM=%d) Time:%dms Wait:%dms\n", 
+                moveNum, motorNum, pin, powerName, power, runTime, intervalTime);
   
   // モーター駆動
   ledcWrite(channel, power);
-  delay(TEST_DURATION);
+  delay(runTime);
   ledcWrite(channel, 0);
   
-  delay(PATTERN_INTERVAL);  // 3秒インターバル
+  delay(intervalTime);
 }
 
 void run10Pattern() {
@@ -156,17 +162,17 @@ void run10Pattern() {
   
   Serial.println("\n=== 10 Pattern Fixed Sequence ===");
   
-  // さらにバラバラなパターン（全箇所×全強度を網羅）
-  executePattern(2, POWER_STRONG, 1);   // Motor2 強い
-  executePattern(3, POWER_STRONG, 2);     // Motor3 強い
-  executePattern(1, POWER_WEAK, 3);     // Motor1 弱い
-  executePattern(1, POWER_STRONG, 4);   // Motor1 強い（連続＆強度変更）
-  executePattern(2, POWER_WEAK, 5);     // Motor2 弱い（強度変更）
-  executePattern(1, POWER_STRONG, 6);   // Motor1 強い
-  executePattern(2, POWER_STRONG, 7);   // Motor2 強い
-  executePattern(3, POWER_WEAK, 8);     // Motor3 弱い（連続＆強度変更）
-  executePattern(3, POWER_WEAK, 9);     // Motor3 弱い
-  executePattern(1, POWER_STRONG, 10);  // Motor1 強い
+  // 固定の10パターン（順番と強度は固定、時間だけバラバラ）
+  executePattern(2, POWER_STRONG, 1, patternRunTimes[0], patternIntervals[0]);   // Motor2 強い 1800ms / 350ms
+  executePattern(3, POWER_STRONG, 2, patternRunTimes[1], patternIntervals[1]);   // Motor3 強い 2400ms / 100ms
+  executePattern(1, POWER_WEAK, 3, patternRunTimes[2], patternIntervals[2]);     // Motor1 弱い 1200ms / 450ms
+  executePattern(1, POWER_STRONG, 4, patternRunTimes[3], patternIntervals[3]);   // Motor1 強い 2700ms / 200ms
+  executePattern(2, POWER_WEAK, 5, patternRunTimes[4], patternIntervals[4]);     // Motor2 弱い 1500ms / 0ms
+  executePattern(1, POWER_STRONG, 6, patternRunTimes[5], patternIntervals[5]);   // Motor1 強い 2100ms / 300ms
+  executePattern(2, POWER_STRONG, 7, patternRunTimes[6], patternIntervals[6]);   // Motor2 強い 1000ms / 500ms
+  executePattern(3, POWER_WEAK, 8, patternRunTimes[7], patternIntervals[7]);     // Motor3 弱い 2900ms / 150ms
+  executePattern(3, POWER_WEAK, 9, patternRunTimes[8], patternIntervals[8]);     // Motor3 弱い 1600ms / 250ms
+  executePattern(1, POWER_STRONG, 10, patternRunTimes[9], patternIntervals[9]);  // Motor1 強い 2300ms / 50ms
   
   // 全モーター停止
   ledcWrite(MOTOR1_CH, 0);
@@ -253,7 +259,7 @@ void loop() {
     unsigned long pressDuration = millis() - pressStartTime;
     
     if (pressDuration >= LONG_PRESS_TIME) {
-      // 長押し：10パターン実行（不規則順）
+      // 長押し：10パターン実行
       Serial.printf("Long press detected (%lums)\n", pressDuration);
       run10Pattern();
     } else {
