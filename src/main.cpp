@@ -95,7 +95,7 @@ void runAllTests() {
   M5.Display.println("");
   M5.Display.setTextSize(1);
   M5.Display.println("Short: Full test");
-  M5.Display.println("Long: 10x pattern");
+  M5.Display.println("Long: 20x pattern");
   
   delay(2000);
 }
@@ -126,7 +126,7 @@ void executePattern(const char* position, int power, int moveNum, int runTime, i
   M5.Display.clear();
   M5.Display.setCursor(0, 0);
   M5.Display.setTextSize(1);
-  M5.Display.printf("Move %d/10\n", moveNum);
+  M5.Display.printf("Move %d/20\n", moveNum);
   M5.Display.println("==============");
   M5.Display.println("");
   M5.Display.setTextSize(2);
@@ -137,7 +137,7 @@ void executePattern(const char* position, int power, int moveNum, int runTime, i
   M5.Display.printf("Time:%dms\n", runTime);
   M5.Display.printf("Wait:%dms", intervalTime);
   
-  Serial.printf("Move %d/10: %s G%d %s (PWM=%d) Time:%dms Wait:%dms\n", 
+  Serial.printf("Move %d/20: %s G%d %s (PWM=%d) Time:%dms Wait:%dms\n", 
                 moveNum, position, pin, strengthName, power, runTime, intervalTime);
   
   // モーター駆動
@@ -150,7 +150,7 @@ void executePattern(const char* position, int power, int moveNum, int runTime, i
     M5.Display.clear();
     M5.Display.setCursor(0, 0);
     M5.Display.setTextSize(1);
-    M5.Display.printf("Move %d/10\n", moveNum);
+    M5.Display.printf("Move %d/20\n", moveNum);
     M5.Display.println("==============");
     M5.Display.println("");
     M5.Display.setTextSize(2);
@@ -164,17 +164,17 @@ void executePattern(const char* position, int power, int moveNum, int runTime, i
   }
 }
 
-void run10Pattern() {
+void run20Pattern() {
   M5.Display.clear();
   M5.Display.setCursor(0, 0);
   M5.Display.setTextSize(2);
   M5.Display.println("Starting");
-  M5.Display.println("10x Pattern");
+  M5.Display.println("20x Pattern");
   delay(1000);
   
-  Serial.println("\n=== 10 Pattern Fixed Sequence ===");
+  Serial.println("\n=== 20 Pattern Fixed Sequence ===");
   
-  // 固定の10パターン（順番と強度は固定、時間だけバラバラ）
+  // 1~10回目
   executePattern("Center", POWER_STRONG, 1, patternRunTimes[0], patternIntervals[0]);  // Center Strong 1800ms / 350ms
   executePattern("Right", POWER_STRONG, 2, patternRunTimes[1], patternIntervals[1]);   // Right Strong 2400ms / 100ms
   executePattern("Left", POWER_WEAK, 3, patternRunTimes[2], patternIntervals[2]);      // Left Weak 1200ms / 450ms
@@ -186,22 +186,34 @@ void run10Pattern() {
   executePattern("Right", POWER_WEAK, 9, patternRunTimes[8], patternIntervals[8]);     // Right Weak 1600ms / 250ms
   executePattern("Left", POWER_STRONG, 10, patternRunTimes[9], patternIntervals[9]);   // Left Strong 2300ms / 50ms
   
+  // 11~20回目（配列の順番をめちゃくちゃに、位置と強度も変更）
+  executePattern("Right", POWER_WEAK, 11, patternRunTimes[5], patternIntervals[8]);    // Right Weak 2100ms / 250ms
+  executePattern("Center", POWER_STRONG, 12, patternRunTimes[9], patternIntervals[3]); // Center Strong 2300ms / 200ms
+  executePattern("Left", POWER_WEAK, 13, patternRunTimes[7], patternIntervals[6]);     // Left Weak 2900ms / 500ms
+  executePattern("Right", POWER_STRONG, 14, patternRunTimes[2], patternIntervals[9]);  // Right Strong 1200ms / 50ms
+  executePattern("Center", POWER_WEAK, 15, patternRunTimes[4], patternIntervals[1]);   // Center Weak 1500ms / 100ms
+  executePattern("Left", POWER_STRONG, 16, patternRunTimes[8], patternIntervals[5]);   // Left Strong 1600ms / 300ms
+  executePattern("Right", POWER_WEAK, 17, patternRunTimes[1], patternIntervals[7]);    // Right Weak 2400ms / 150ms
+  executePattern("Center", POWER_STRONG, 18, patternRunTimes[6], patternIntervals[4]); // Center Strong 1000ms / 0ms
+  executePattern("Right", POWER_STRONG, 19, patternRunTimes[3], patternIntervals[2]);  // Right Strong 2700ms / 450ms
+  executePattern("Center", POWER_WEAK, 20, patternRunTimes[0], patternIntervals[0]);   // Center Weak 1800ms / 350ms
+  
   // 全モーター停止
   ledcWrite(MOTOR_LEFT_CH, 0);
   ledcWrite(MOTOR_CENTER_CH, 0);
   ledcWrite(MOTOR_RIGHT_CH, 0);
   
-  Serial.println("=== 10 Pattern Complete ===\n");
+  Serial.println("=== 20 Pattern Complete ===\n");
   
   M5.Display.clear();
   M5.Display.setCursor(0, 0);
   M5.Display.setTextSize(2);
-  M5.Display.println("10x Pattern");
+  M5.Display.println("20x Pattern");
   M5.Display.println("Complete!");
   M5.Display.println("");
   M5.Display.setTextSize(1);
   M5.Display.println("Short: Full test");
-  M5.Display.println("Long: 10x pattern");
+  M5.Display.println("Long: 20x pattern");
   
   delay(2000);
 }
@@ -247,10 +259,10 @@ void setup() {
   M5.Display.println("");
   M5.Display.setTextSize(1);
   M5.Display.println("Short: Full test");
-  M5.Display.println("Long: 10x pattern");
+  M5.Display.println("Long: 20x pattern");
   
   Serial.println("\nShort press: Full test");
-  Serial.println("Long press: 10x pattern\n");
+  Serial.println("Long press: 20x pattern\n");
 }
 
 void loop() {
@@ -270,9 +282,9 @@ void loop() {
     unsigned long pressDuration = millis() - pressStartTime;
     
     if (pressDuration >= LONG_PRESS_TIME) {
-      // 長押し：10パターン実行
+      // 長押し：20パターン実行
       Serial.printf("Long press detected (%lums)\n", pressDuration);
-      run10Pattern();
+      run20Pattern();
     } else {
       // 短押し：フルテスト実行
       Serial.printf("Short press detected (%lums)\n", pressDuration);
@@ -291,7 +303,7 @@ void loop() {
     M5.Display.println("");
     M5.Display.setTextSize(1);
     M5.Display.println("Short: Full test");
-    M5.Display.println("Long: 10x pattern");
+    M5.Display.println("Long: 20x pattern");
   }
   
   delay(10);
